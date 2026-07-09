@@ -6,7 +6,6 @@
     <title>Student Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* A little custom CSS to handle hiding/showing screens smoothly */
         .hidden-screen { display: none !important; }
         .clickable { cursor: pointer; transition: color 0.2s; }
         .clickable:hover { color: #2563eb; text-decoration: underline; }
@@ -18,12 +17,13 @@
         <div class="bg-white p-8 rounded-lg shadow-md w-96 text-center">
             <h1 class="text-2xl font-bold mb-6 text-blue-600">Portal Login</h1>
             <p class="text-sm text-gray-500 mb-4">Enter Student Number or Teacher PIN</p>
-            <input type="password" id="login-input" placeholder="e.g., 2023001 or PIN" 
+            <input type="password" id="login-input" placeholder="e.g., 11-05075 or PIN" 
                    class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4 text-center">
-            <button id="login-btn" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition">
+            <button id="login-btn" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition font-semibold">
                 Log In
             </button>
-            <p id="login-error" class="text-red-500 text-sm mt-3 hidden-screen">Invalid credential. Try again.</p>
+            <div id="login-error" class="hidden-screen mt-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-3 rounded text-sm text-left shadow-sm">
+            </div>
         </div>
     </div>
 
@@ -38,11 +38,10 @@
                    class="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
             <select id="section-filter" class="px-4 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="All">All Sections/Blocks</option>
-                </select>
+            </select>
         </div>
 
         <div class="bg-white rounded-lg shadow overflow-x-auto">
-            
             <table class="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                     <tr class="bg-blue-600 text-white">
@@ -70,27 +69,15 @@
         <div class="flex justify-between items-center mb-6 bg-white p-4 rounded shadow">
             <div>
                 <h2 class="text-2xl font-bold text-gray-800">Student Portal</h2>
-                <p id="student-info-header" class="text-gray-600">Welcome, Student</p>
+                <p id="student-info-header" class="text-gray-600">Welcome</p>
             </div>
             <button class="logout-btn text-red-500 font-semibold hover:text-red-700">Logout</button>
         </div>
 
-        <div class="bg-white rounded-lg shadow overflow-x-auto mb-6">
-            <table class="w-full text-center border-collapse whitespace-nowrap">
-                <thead>
-                    <tr class="bg-blue-600 text-white">
-                        <th class="p-3 border-b">1st Q</th>
-                        <th class="p-3 border-b">2nd Q</th>
-                        <th class="p-3 border-b">3rd Q</th>
-                        <th class="p-3 border-b">4th Q</th>
-                        <th class="p-3 border-b">Final Grade</th>
-                        <th class="p-3 border-b">Remarks</th>
-                    </tr>
-                </thead>
-                <tbody id="student-main-grades">
-                    </tbody>
-            </table>
-            <p class="text-sm text-gray-500 p-3 italic">* Click on a quarterly grade to see the breakdown.</p>
+        <div class="bg-white rounded-lg shadow p-4 md:p-6 mb-6">
+            <div id="student-main-grades">
+                </div>
+            <p class="text-sm text-gray-500 mt-4 italic text-center">* Click on a quarterly grade to see the breakdown.</p>
         </div>
     </div>
 
@@ -101,37 +88,19 @@
                 <button id="back-to-dashboard-btn" class="text-blue-600 hover:underline">&larr; Back to Dashboard</button>
             </div>
             
-            <div class="overflow-x-auto pb-2">
-                <table class="w-full text-center border-collapse border border-gray-200 whitespace-nowrap">
-                    <thead>
-                        <tr class="bg-gray-100 text-gray-700">
-                            <th class="p-3 border">Quizzes (35%)</th>
-                            <th class="p-3 border">Participation (15%)</th>
-                            <th class="p-3 border">Attendance (10%)</th>
-                            <th class="p-3 border">Exams (40%)</th>
-                            <th class="p-3 border font-bold text-blue-600">Total Grade</th>
-                            </tr>
-                    </thead>
-                    <tbody id="breakdown-table-body">
-                        </tbody>
-                </table>
-            </div>
+            <div id="breakdown-content">
+                </div>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // 1. CONFIGURATION & STATE
-        // ==========================================
         // Paste your Google Apps Script Web App URL here:
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxZErghqvZ2kFaVMGyefYa4vzPf-KrvyUP43kL0f8B86GUltZVeshhc9VRZwOFaKY1ghQ/exec"; 
         
-        // App State
         let currentAdminData = [];
         let currentStudentData = null;
         let adminPin = "";
 
-        // DOM Elements
         const screens = {
             login: document.getElementById('login-screen'),
             admin: document.getElementById('admin-dashboard'),
@@ -143,9 +112,6 @@
         const loginError = document.getElementById('login-error');
         const logoutBtns = document.querySelectorAll('.logout-btn');
 
-        // ==========================================
-        // 2. NAVIGATION & LOGIN LOGIC
-        // ==========================================
         function showScreen(screenName) {
             Object.values(screens).forEach(screen => screen.classList.add('hidden-screen'));
             screens[screenName].classList.remove('hidden-screen');
@@ -160,28 +126,29 @@
             loginError.classList.add('hidden-screen');
 
             try {
-                // If input looks like the PIN (e.g., 4 digits), try Admin login
-                if (inputVal.length <= 6 && !isNaN(inputVal)) {
+                if (inputVal.length <= 6 && !isNaN(inputVal) && !inputVal.includes("-")) {
                     const res = await apiCall({ action: "adminLogin", pin: inputVal });
                     if (res.success) {
                         adminPin = inputVal;
                         await loadAdminDashboard();
                         showScreen('admin');
                     } else {
-                        throw new Error("Invalid PIN");
+                        throw new Error("Invalid Teacher PIN.");
                     }
                 } else {
-                    // Otherwise, try Student Login
                     const res = await apiCall({ action: "getStudent", studentNumber: inputVal });
-                    if (res && res.studentNumber) {
+                    
+                    // THE FIX IS HERE: We now strictly check if Google found their grades!
+                    if (res && res.grades) {
                         currentStudentData = res;
                         renderStudentDashboard();
                         showScreen('student');
                     } else {
-                        throw new Error("Student not found");
+                        throw new Error("Student not found. Please check your Student Number.");
                     }
                 }
             } catch (error) {
+                // This triggers the red alert box you requested
                 loginError.innerText = error.message || "Login failed. Try again.";
                 loginError.classList.remove('hidden-screen');
             }
@@ -197,150 +164,98 @@
             showScreen('login');
         }));
 
-        // ==========================================
-        // 3. STUDENT DASHBOARD LOGIC
-        // ==========================================
         function renderStudentDashboard() {
             document.getElementById('student-info-header').innerText = `Student No: ${currentStudentData.studentNumber}`;
-            const tbody = document.getElementById('student-main-grades');
+            const container = document.getElementById('student-main-grades');
             const g = currentStudentData.grades;
 
             if (!g) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-3 text-gray-500">No grades posted yet.</td></tr>`;
+                container.innerHTML = `<p class="p-3 text-gray-500 text-center">No grades posted yet.</p>`;
                 return;
             }
 
-            // The quarters are clickable and trigger the breakdown screen
-            tbody.innerHTML = `
-                <tr class="hover:bg-gray-50 border-b">
-                    <td class="p-3 font-bold text-blue-600 clickable" onclick="openBreakdown('1st')">${g.q1 || '-'}</td>
-                    <td class="p-3 font-bold text-blue-600 clickable" onclick="openBreakdown('2nd')">${g.q2 || '-'}</td>
-                    <td class="p-3 font-bold text-blue-600 clickable" onclick="openBreakdown('3rd')">${g.q3 || '-'}</td>
-                    <td class="p-3 font-bold text-blue-600 clickable" onclick="openBreakdown('4th')">${g.q4 || '-'}</td>
-                    <td class="p-3 font-bold">${g.final || '-'}</td>
-                    <td class="p-3 font-bold ${g.remarks === 'Passed' ? 'text-green-600' : 'text-red-600'}">${g.remarks || '-'}</td>
-                </tr>
+            container.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-6 gap-4 text-center items-center">
+                    <div class="flex justify-between md:flex-col p-3 border-b md:border-none">
+                        <span class="font-bold text-gray-600 md:mb-2 text-left md:text-center">1st Quarter</span>
+                        <span class="text-xl font-bold text-blue-600 clickable" onclick="openBreakdown('1st')">${g.q1 || '-'}</span>
+                    </div>
+                    <div class="flex justify-between md:flex-col p-3 border-b md:border-none">
+                        <span class="font-bold text-gray-600 md:mb-2 text-left md:text-center">2nd Quarter</span>
+                        <span class="text-xl font-bold text-blue-600 clickable" onclick="openBreakdown('2nd')">${g.q2 || '-'}</span>
+                    </div>
+                    <div class="flex justify-between md:flex-col p-3 border-b md:border-none">
+                        <span class="font-bold text-gray-600 md:mb-2 text-left md:text-center">3rd Quarter</span>
+                        <span class="text-xl font-bold text-blue-600 clickable" onclick="openBreakdown('3rd')">${g.q3 || '-'}</span>
+                    </div>
+                    <div class="flex justify-between md:flex-col p-3 border-b md:border-none">
+                        <span class="font-bold text-gray-600 md:mb-2 text-left md:text-center">4th Quarter</span>
+                        <span class="text-xl font-bold text-blue-600 clickable" onclick="openBreakdown('4th')">${g.q4 || '-'}</span>
+                    </div>
+                    <div class="flex justify-between md:flex-col p-3 border-b md:border-none bg-gray-50 rounded-lg">
+                        <span class="font-bold text-gray-800 md:mb-2 text-left md:text-center">Final Grade</span>
+                        <span class="text-xl font-bold text-gray-900">${g.final || '-'}</span>
+                    </div>
+                    <div class="flex justify-between md:flex-col p-3">
+                        <span class="font-bold text-gray-800 md:mb-2 text-left md:text-center">Remarks</span>
+                        <span class="text-xl font-bold ${g.remarks === 'Passed' ? 'text-green-600' : 'text-red-600'}">${g.remarks || '-'}</span>
+                    </div>
+                </div>
             `;
         }
 
         function openBreakdown(quarter) {
             const breakdown = currentStudentData.breakdowns.find(b => b.quarter.toString().includes(quarter.replace(/\D/g, '')));
-            const tbody = document.getElementById('breakdown-table-body');
+            const container = document.getElementById('breakdown-content');
             document.getElementById('breakdown-title').innerText = `${quarter} Quarter Breakdown`;
 
-            // Manage the "Actions" header dynamically (Only show if Teacher)
-            const headerRow = document.querySelector('#breakdown-screen thead tr');
-            if (adminPin !== "" && !document.getElementById('bd-action-header')) {
-                headerRow.innerHTML += `<th id="bd-action-header" class="p-3 border text-blue-600">Actions</th>`;
-            } else if (adminPin === "" && document.getElementById('bd-action-header')) {
-                document.getElementById('bd-action-header').remove();
+            if (!breakdown) {
+                container.innerHTML = `<p class="text-gray-500 text-center py-4">Breakdown not available yet.</p>`;
+                showScreen('breakdown');
+                return;
             }
 
-            if (breakdown) {
-                let html = `
-                    <tr class="bg-white">
-                        <td class="p-3 border" data-bfield="quizzes">${breakdown.quizzes}</td>
-                        <td class="p-3 border" data-bfield="participation">${breakdown.participation}</td>
-                        <td class="p-3 border" data-bfield="attendance">${breakdown.attendance}</td>
-                        <td class="p-3 border" data-bfield="exams">${breakdown.exams}</td>
-                        <td class="p-3 border font-bold text-blue-600" id="bd-total">${breakdown.total}</td>
+            let html = `
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 text-center items-center" id="breakdown-grid-row">
+                        <div class="flex justify-between md:flex-col p-3 border-b md:border-none" data-field="quizzes">
+                            <span class="font-bold text-gray-600 md:mb-2 text-left md:text-center">Quizzes (35%)</span>
+                            <span class="text-gray-800 font-semibold text-right md:text-center value-text">${breakdown.quizzes}</span>
+                        </div>
+                        <div class="flex justify-between md:flex-col p-3 border-b md:border-none" data-field="participation">
+                            <span class="font-bold text-gray-600 md:mb-2 text-left md:text-center">Participation (15%)</span>
+                            <span class="text-gray-800 font-semibold text-right md:text-center value-text">${breakdown.participation}</span>
+                        </div>
+                        <div class="flex justify-between md:flex-col p-3 border-b md:border-none" data-field="attendance">
+                            <span class="font-bold text-gray-600 md:mb-2 text-left md:text-center">Attendance (10%)</span>
+                            <span class="text-gray-800 font-semibold text-right md:text-center value-text">${breakdown.attendance}</span>
+                        </div>
+                        <div class="flex justify-between md:flex-col p-3 border-b md:border-none" data-field="exams">
+                            <span class="font-bold text-gray-600 md:mb-2 text-left md:text-center">Exams (40%)</span>
+                            <span class="text-gray-800 font-semibold text-right md:text-center value-text">${breakdown.exams}</span>
+                        </div>
+                        <div class="flex justify-between md:flex-col p-3 text-blue-600 font-bold">
+                            <span class="text-gray-600 md:text-blue-600 text-left md:text-center">Total Grade</span>
+                            <span class="text-right md:text-center text-xl" id="bd-total">${breakdown.total}</span>
+                        </div>
+                    </div>
+            `;
+
+            if (adminPin !== "") {
+                html += `
+                    <div class="mt-6 flex justify-end border-t pt-4">
+                        <button id="bd-edit-btn" onclick="toggleBreakdownEditResponsive(this, '${quarter}')" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 font-semibold shadow-sm transition">
+                            Edit Breakdown
+                        </button>
+                    </div>
                 `;
-                
-                // Add the Edit button if Teacher
-                if (adminPin !== "") {
-                    html += `
-                        <td class="p-3 border text-center">
-                            <button onclick="toggleBreakdownEdit(this, '${quarter}')" class="text-blue-600 hover:text-blue-800 font-semibold px-2">Edit</button>
-                        </td>
-                    `;
-                }
-                
-                html += `</tr>`;
-                tbody.innerHTML = html;
-            } else {
-                const colSpan = adminPin !== "" ? 6 : 5;
-                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="p-3 border text-gray-500">Breakdown not available yet.</td></tr>`;
             }
-            
+            html += `</div>`;
+            container.innerHTML = html;
             showScreen('breakdown');
-        }
-        async function toggleBreakdownEdit(btn, quarter) {
-            const tr = btn.closest('tr');
-            const isEditing = btn.innerText === "Save";
-
-            if (!isEditing) {
-                // Enter Edit Mode
-                ['quizzes', 'participation', 'attendance', 'exams'].forEach(field => {
-                    const td = tr.querySelector(`td[data-bfield="${field}"]`);
-                    const val = td.innerText === '-' || td.innerText === '' ? '' : td.innerText;
-                    td.innerHTML = `<input type="number" class="w-16 border rounded px-1 text-center" value="${val}" data-original="${val}">`;
-                });
-                
-                btn.innerText = "Save";
-                btn.classList.replace('text-blue-600', 'text-green-600');
-                
-                const cancelBtn = document.createElement('button');
-                cancelBtn.innerText = "Cancel";
-                cancelBtn.className = "text-gray-500 hover:text-gray-700 font-semibold px-2 ml-2 cancel-btn";
-                cancelBtn.onclick = () => {
-                    ['quizzes', 'participation', 'attendance', 'exams'].forEach(field => {
-                        const td = tr.querySelector(`td[data-bfield="${field}"]`);
-                        td.innerHTML = td.querySelector('input').getAttribute('data-original') || '-';
-                    });
-                    btn.innerText = "Edit";
-                    btn.classList.replace('text-green-600', 'text-blue-600');
-                    btn.disabled = false;
-                    cancelBtn.remove();
-                };
-                btn.parentNode.appendChild(cancelBtn);
-            } else {
-                // Save Mode
-                btn.innerText = "Saving...";
-                btn.disabled = true;
-                
-                const updatedBreakdown = {};
-                ['quizzes', 'participation', 'attendance', 'exams'].forEach(field => {
-                    const input = tr.querySelector(`td[data-bfield="${field}"] input`);
-                    updatedBreakdown[field] = input.value === '' ? 0 : Number(input.value);
-                });
-
-                const res = await apiCall({
-                    action: "saveBreakdown",
-                    pin: adminPin,
-                    studentNumber: currentStudentData.studentNumber,
-                    quarter: quarter,
-                    breakdown: updatedBreakdown
-                });
-
-                if (res.success) {
-                    // Update the UI Total on the screen
-                    document.getElementById('bd-total').innerText = res.newTotal;
-                    
-                    // Turn inputs back into normal text
-                    ['quizzes', 'participation', 'attendance', 'exams'].forEach(field => {
-                        const td = tr.querySelector(`td[data-bfield="${field}"]`);
-                        td.innerHTML = updatedBreakdown[field];
-                    });
-                    
-                    btn.innerText = "Edit";
-                    btn.classList.replace('text-green-600', 'text-blue-600');
-                    btn.disabled = false;
-                    const cancelBtn = tr.querySelector('.cancel-btn');
-                    if (cancelBtn) cancelBtn.remove();
-                    
-                    // Secretly reload the main dashboard in the background so the Final Grade updates!
-                    await loadAdminDashboard();
-                    
-                } else {
-                    alert("Failed to save breakdown: " + res.message);
-                    btn.innerText = "Save";
-                    btn.disabled = false;
-                }
-            }
         }
 
         document.getElementById('back-to-dashboard-btn').addEventListener('click', () => {
-            // If the Admin PIN is active, go back to Admin. Otherwise, go to Student.
             if (adminPin !== "") {
                 showScreen('admin');
             } else {
@@ -348,9 +263,6 @@
             }
         });
 
-        // ==========================================
-        // 4. ADMIN DASHBOARD LOGIC
-        // ==========================================
         async function loadAdminDashboard() {
             const tbody = document.getElementById('admin-table-body');
             tbody.innerHTML = `<tr><td class="p-3 text-center text-gray-400" colspan="9">Loading student data...</td></tr>`;
@@ -367,7 +279,7 @@
             const tbody = document.getElementById('admin-table-body');
             tbody.innerHTML = "";
 
-            dataToRender.forEach((student, index) => {
+            dataToRender.forEach((student) => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-gray-50 border-b";
                 tr.innerHTML = `
@@ -387,10 +299,8 @@
             });
         }
 
-        // --- Filtering and Searching ---
         document.getElementById('admin-search').addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            filterAdminTable(term, document.getElementById('section-filter').value);
+            filterAdminTable(e.target.value.toLowerCase(), document.getElementById('section-filter').value);
         });
 
         document.getElementById('section-filter').addEventListener('change', (e) => {
@@ -413,13 +323,32 @@
             renderAdminTable(filtered);
         }
 
-        // --- Editing Logic ---
+        async function openAdminBreakdown(cellElement, studentNumber, quarter) {
+            if (cellElement.querySelector('input')) return;
+
+            const originalText = cellElement.innerText;
+            cellElement.innerText = "...";
+
+            try {
+                const res = await apiCall({ action: "getStudent", studentNumber: studentNumber });
+                if (res && res.studentNumber) {
+                    currentStudentData = res;
+                    openBreakdown(quarter);
+                } else {
+                    alert("Could not load details.");
+                }
+            } catch (error) {
+                alert("Error connecting to database.");
+            } finally {
+                cellElement.innerText = originalText;
+            }
+        }
+
         async function toggleEdit(btn, studentNumber) {
             const tr = btn.closest('tr');
             const isEditing = btn.innerText === "Save";
 
             if (!isEditing) {
-                // Enter Edit Mode
                 ['q1', 'q2', 'q3', 'q4'].forEach(field => {
                     const td = tr.querySelector(`td[data-field="${field}"]`);
                     const val = td.innerText === '-' ? '' : td.innerText;
@@ -432,10 +361,18 @@
                 const cancelBtn = document.createElement('button');
                 cancelBtn.innerText = "Cancel";
                 cancelBtn.className = "text-gray-500 hover:text-gray-700 font-semibold px-2 ml-2 cancel-btn";
-                cancelBtn.onclick = () => cancelEdit(tr, btn);
+                cancelBtn.onclick = () => {
+                    ['q1', 'q2', 'q3', 'q4'].forEach(field => {
+                        const td = tr.querySelector(`td[data-field="${field}"]`);
+                        td.innerHTML = td.querySelector('input').getAttribute('data-original') || '-';
+                    });
+                    btn.innerText = "Edit";
+                    btn.classList.replace('text-green-600', 'text-blue-600');
+                    btn.disabled = false;
+                    cancelBtn.remove();
+                };
                 btn.parentNode.appendChild(cancelBtn);
             } else {
-                // Save Mode
                 btn.innerText = "Saving...";
                 btn.disabled = true;
                 const updatedGrades = {};
@@ -445,7 +382,6 @@
                     updatedGrades[field] = input.value === '' ? '' : Number(input.value);
                 });
 
-                // Send to backend
                 const res = await apiCall({
                     action: "saveGrades",
                     pin: adminPin,
@@ -454,69 +390,98 @@
                 });
 
                 if (res.success) {
-                    await loadAdminDashboard(); // Reload table to get newly calculated Final/Remarks
+                    await loadAdminDashboard();
                 } else {
                     alert("Failed to save grades.");
-                    cancelEdit(tr, btn);
+                    btn.innerText = "Save";
+                    btn.disabled = false;
                 }
             }
         }
 
-        function cancelEdit(tr, editBtn) {
-            ['q1', 'q2', 'q3', 'q4'].forEach(field => {
-                const td = tr.querySelector(`td[data-field="${field}"]`);
-                const originalVal = td.querySelector('input').getAttribute('data-original');
-                td.innerHTML = originalVal || '-';
-            });
-            editBtn.innerText = "Edit";
-            editBtn.classList.replace('text-green-600', 'text-blue-600');
-            editBtn.disabled = false;
-            const cancelBtn = tr.querySelector('.cancel-btn');
-            if (cancelBtn) cancelBtn.remove();
+        async function toggleBreakdownEditResponsive(btn, quarter) {
+            const gridRow = document.getElementById('breakdown-grid-row');
+            const isEditing = btn.innerText === "Save Changes";
+
+            if (!isEditing) {
+                ['quizzes', 'participation', 'attendance', 'exams'].forEach(field => {
+                    const container = gridRow.querySelector(`div[data-field="${field}"]`);
+                    const textSpan = container.querySelector('.value-text');
+                    const val = textSpan.innerText === '-' || textSpan.innerText === '' ? '' : textSpan.innerText;
+                    textSpan.innerHTML = `<input type="number" class="w-20 border rounded px-2 py-1 text-center bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" value="${val}" data-original="${val}">`;
+                });
+                
+                btn.innerText = "Save Changes";
+                btn.className = "bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 font-semibold shadow-sm transition";
+                
+                const cancelBtn = document.createElement('button');
+                cancelBtn.innerText = "Cancel";
+                cancelBtn.className = "text-gray-600 hover:text-gray-800 font-semibold px-4 py-2 ml-3 border rounded-md bg-white hover:bg-gray-50 transition cancel-btn";
+                cancelBtn.onclick = () => {
+                    ['quizzes', 'participation', 'attendance', 'exams'].forEach(field => {
+                        const container = gridRow.querySelector(`div[data-field="${field}"]`);
+                        const textSpan = container.querySelector('.value-text');
+                        textSpan.innerHTML = textSpan.querySelector('input').getAttribute('data-original') || '-';
+                    });
+                    btn.innerText = "Edit Breakdown";
+                    btn.className = "bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 font-semibold shadow-sm transition";
+                    cancelBtn.remove();
+                };
+                btn.parentNode.appendChild(cancelBtn);
+            } else {
+                btn.innerText = "Saving...";
+                btn.disabled = true;
+                
+                const updatedBreakdown = {};
+                ['quizzes', 'participation', 'attendance', 'exams'].forEach(field => {
+                    const container = gridRow.querySelector(`div[data-field="${field}"]`);
+                    const input = container.querySelector('.value-text input');
+                    updatedBreakdown[field] = input.value === '' ? 0 : Number(input.value);
+                });
+
+                const res = await apiCall({
+                    action: "saveBreakdown",
+                    pin: adminPin,
+                    studentNumber: currentStudentData.studentNumber,
+                    quarter: quarter,
+                    breakdown: updatedBreakdown
+                });
+
+                if (res.success) {
+                    document.getElementById('bd-total').innerText = res.newTotal;
+                    ['quizzes', 'participation', 'attendance', 'exams'].forEach(field => {
+                        const container = gridRow.querySelector(`div[data-field="${field}"]`);
+                        const textSpan = container.querySelector('.value-text');
+                        textSpan.innerHTML = updatedBreakdown[field];
+                    });
+                    
+                    btn.innerText = "Edit Breakdown";
+                    btn.className = "bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 font-semibold shadow-sm transition";
+                    btn.disabled = false;
+                    
+                    const cancelBtn = btn.parentNode.querySelector('.cancel-btn');
+                    if (cancelBtn) cancelBtn.remove();
+                    
+                    await loadAdminDashboard();
+                } else {
+                    alert("Failed to save breakdown.");
+                    btn.innerText = "Save Changes";
+                    btn.disabled = false;
+                }
+            }
         }
 
-        // ==========================================
-        // 5. API HELPER FUNCTION
-        // ==========================================
-        // ==========================================
-        // 5. API HELPER FUNCTION (DEBUG VERSION)
-        // ==========================================
         async function apiCall(payload) {
-            console.log("1. Sending this to Google:", payload);
-            
             try {
                 const response = await fetch(WEB_APP_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'text/plain;charset=utf-8',
-                    },
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify(payload)
                 });
-                
-                const rawText = await response.text();
-                console.log("2. Google replied exactly with:", rawText);
-                
-                return JSON.parse(rawText);
+                return await response.json();
             } catch (error) {
-                console.error("3. The code broke here:", error);
+                console.error("API Error:", error);
                 throw error;
-            }
-        }
-        async function openAdminBreakdown(cellElement, studentNumber, quarter) {
-            // 1. Prevent clicking if you are currently inline-editing this row!
-            if (cellElement.querySelector('input')) return;
-
-            // 2. Change text temporarily so the teacher knows it is loading
-            const originalText = cellElement.innerText;
-            cellElement.innerText = "...";
-
-            // 3. Fetch the breakdown for this specific student using our existing API
-            const res = await apiCall({ action: "getStudent", studentNumber: studentNumber });
-            
-            if (res && res.studentNumber) {
-                currentStudentData = res; // Temporarily store this student's data
-                cellElement.innerText = originalText; // Reset the cell text
-                openBreakdown(quarter); // Show the breakdown screen
             }
         }
     </script>
