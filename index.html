@@ -24,6 +24,13 @@
             </button>
             <div id="login-error" class="hidden-screen mt-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-3 rounded text-sm text-left shadow-sm">
             </div>
+            
+            <p class="mt-6 text-sm text-gray-600 border-t pt-4">
+                Not in the system yet? <br>
+                <span class="text-blue-600 font-bold clickable" onclick="openRegisterModal()">Register as a new student</span>
+            </p>
+            <div id="login-error" class="hidden-screen mt-4 bg-red-50 border-l-4 border-red-500 text-red-700 p-3 rounded text-sm text-left shadow-sm">
+            </div>
         </div>
     </div>
 
@@ -116,6 +123,32 @@
             <div class="mt-6 flex justify-end gap-3">
                 <button onclick="closeAddStudentModal()" class="px-4 py-2 text-gray-600 border rounded hover:bg-gray-50 transition font-semibold">Cancel</button>
                 <button id="save-new-student-btn" onclick="saveNewStudent()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-semibold">Save Student</button>
+            </div>
+        </div>
+    </div>
+    <div id="register-modal" class="hidden-screen fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-1 text-blue-600">Student Registration</h3>
+            <p class="text-sm text-gray-500 mb-4">Create your profile to view your grades.</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Student Number</label>
+                    <input type="text" id="reg-student-id" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g., 24-0001">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Full Name</label>
+                    <input type="text" id="reg-student-name" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Last Name, First Name">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Section / Block</label>
+                    <input type="text" id="reg-student-section" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g., Grade 10 - Rizal">
+                </div>
+            </div>
+            <div id="reg-error" class="hidden text-red-600 text-sm mt-3 font-semibold"></div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeRegisterModal()" class="px-4 py-2 text-gray-600 border rounded hover:bg-gray-50 transition font-semibold">Cancel</button>
+                <button id="submit-reg-btn" onclick="submitRegistration()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-semibold">Register</button>
             </div>
         </div>
     </div>
@@ -547,6 +580,68 @@
                 errorDiv.classList.remove('hidden');
             } finally {
                 btn.innerText = "Save Student";
+                btn.disabled = false;
+            }
+        }
+        // ==========================================
+        // PUBLIC REGISTRATION LOGIC
+        // ==========================================
+        function openRegisterModal() {
+            document.getElementById('register-modal').classList.remove('hidden-screen');
+            document.getElementById('reg-student-id').value = '';
+            document.getElementById('reg-student-name').value = '';
+            document.getElementById('reg-student-section').value = '';
+            document.getElementById('reg-error').classList.add('hidden');
+        }
+
+        function closeRegisterModal() {
+            document.getElementById('register-modal').classList.add('hidden-screen');
+        }
+
+        async function submitRegistration() {
+            const id = document.getElementById('reg-student-id').value.trim();
+            const name = document.getElementById('reg-student-name').value.trim();
+            const section = document.getElementById('reg-student-section').value.trim();
+            const errorDiv = document.getElementById('reg-error');
+            const btn = document.getElementById('submit-reg-btn');
+
+            if (!id || !name || !section) {
+                errorDiv.innerText = "Please fill in all fields.";
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            if (id.length <= 6 && !isNaN(id) && !id.includes("-")) {
+                 errorDiv.innerText = "Student numbers cannot look like a Teacher PIN.";
+                 errorDiv.classList.remove('hidden');
+                 return;
+            }
+
+            btn.innerText = "Registering...";
+            btn.disabled = true;
+            errorDiv.classList.add('hidden');
+
+            try {
+                // Notice: We use 'registerStudent' so it bypasses the PIN requirement
+                const res = await apiCall({
+                    action: "registerStudent",
+                    studentData: { studentNumber: id, name: name, section: section }
+                });
+
+                if (res.success) {
+                    closeRegisterModal();
+                    // Automatically log the new student in!
+                    document.getElementById('login-input').value = id;
+                    document.getElementById('login-btn').click();
+                } else {
+                    errorDiv.innerText = res.message || "Failed to register.";
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorDiv.innerText = "Error connecting to database.";
+                errorDiv.classList.remove('hidden');
+            } finally {
+                btn.innerText = "Register";
                 btn.disabled = false;
             }
         }
