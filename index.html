@@ -39,6 +39,9 @@
             <select id="section-filter" class="px-4 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="All">All Sections/Blocks</option>
             </select>
+            <button onclick="openAddStudentModal()" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold shadow-sm transition whitespace-nowrap">
+                + Add Student
+            </button>
         </div>
 
         <div class="bg-white rounded-lg shadow overflow-x-auto">
@@ -92,7 +95,30 @@
                 </div>
         </div>
     </div>
-
+<div id="add-student-modal" class="hidden-screen fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">Add New Student</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Student Number</label>
+                    <input type="text" id="new-student-id" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g., 24-0001">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Full Name</label>
+                    <input type="text" id="new-student-name" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Last Name, First Name">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1">Section / Block</label>
+                    <input type="text" id="new-student-section" class="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g., Grade 10 - Rizal">
+                </div>
+            </div>
+            <div id="add-student-error" class="hidden text-red-600 text-sm mt-3 font-semibold"></div>
+            <div class="mt-6 flex justify-end gap-3">
+                <button onclick="closeAddStudentModal()" class="px-4 py-2 text-gray-600 border rounded hover:bg-gray-50 transition font-semibold">Cancel</button>
+                <button id="save-new-student-btn" onclick="saveNewStudent()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition font-semibold">Save Student</button>
+            </div>
+        </div>
+    </div>
     <script>
         // Paste your Google Apps Script Web App URL here:
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxZErghqvZ2kFaVMGyefYa4vzPf-KrvyUP43kL0f8B86GUltZVeshhc9VRZwOFaKY1ghQ/exec"; 
@@ -470,7 +496,60 @@
                 }
             }
         }
+// ==========================================
+        // 6. ADD STUDENT LOGIC
+        // ==========================================
+        function openAddStudentModal() {
+            document.getElementById('add-student-modal').classList.remove('hidden-screen');
+            document.getElementById('new-student-id').value = '';
+            document.getElementById('new-student-name').value = '';
+            document.getElementById('new-student-section').value = '';
+            document.getElementById('add-student-error').classList.add('hidden');
+        }
 
+        function closeAddStudentModal() {
+            document.getElementById('add-student-modal').classList.add('hidden-screen');
+        }
+
+        async function saveNewStudent() {
+            const id = document.getElementById('new-student-id').value.trim();
+            const name = document.getElementById('new-student-name').value.trim();
+            const section = document.getElementById('new-student-section').value.trim();
+            const errorDiv = document.getElementById('add-student-error');
+            const btn = document.getElementById('save-new-student-btn');
+
+            if (!id || !name || !section) {
+                errorDiv.innerText = "Please fill in all fields.";
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            btn.innerText = "Saving...";
+            btn.disabled = true;
+            errorDiv.classList.add('hidden');
+
+            try {
+                const res = await apiCall({
+                    action: "addStudent",
+                    pin: adminPin,
+                    studentData: { studentNumber: id, name: name, section: section }
+                });
+
+                if (res.success) {
+                    closeAddStudentModal();
+                    await loadAdminDashboard(); // Automatically refresh the table to show the new student!
+                } else {
+                    errorDiv.innerText = res.message || "Failed to add student.";
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (err) {
+                errorDiv.innerText = "Error connecting to database.";
+                errorDiv.classList.remove('hidden');
+            } finally {
+                btn.innerText = "Save Student";
+                btn.disabled = false;
+            }
+        }
         async function apiCall(payload) {
             try {
                 const response = await fetch(WEB_APP_URL, {
