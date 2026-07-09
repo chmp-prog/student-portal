@@ -27,13 +27,13 @@
         </div>
     </div>
 
-    <div id="admin-dashboard" class="hidden-screen p-6 max-w-7xl mx-auto">
+    <div id="admin-dashboard" class="hidden-screen p-3 md:p-6 max-w-7xl mx-auto">
         <div class="flex justify-between items-center mb-6 bg-white p-4 rounded shadow">
             <h2 class="text-2xl font-bold text-gray-800">Teacher Dashboard</h2>
             <button class="logout-btn text-red-500 font-semibold hover:text-red-700">Logout</button>
         </div>
 
-        <div class="flex gap-4 mb-6 bg-white p-4 rounded shadow">
+        <div class="flex flex-col md:flex-row gap-4 mb-6 bg-white p-4 rounded shadow">
             <input type="text" id="admin-search" placeholder="Search Name or Student No." 
                    class="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
             <select id="section-filter" class="px-4 py-2 border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -42,7 +42,8 @@
         </div>
 
         <div class="bg-white rounded-lg shadow overflow-x-auto">
-            <table class="w-full text-left border-collapse">
+            
+            <table class="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                     <tr class="bg-blue-600 text-white">
                         <th class="p-3 border-b">Student No.</th>
@@ -65,7 +66,7 @@
         </div>
     </div>
 
-    <div id="student-dashboard" class="hidden-screen p-6 max-w-5xl mx-auto">
+    <div id="student-dashboard" class="hidden-screen p-3 md:p-6 max-w-5xl mx-auto">
         <div class="flex justify-between items-center mb-6 bg-white p-4 rounded shadow">
             <div>
                 <h2 class="text-2xl font-bold text-gray-800">Student Portal</h2>
@@ -75,7 +76,7 @@
         </div>
 
         <div class="bg-white rounded-lg shadow overflow-x-auto mb-6">
-            <table class="w-full text-center border-collapse">
+            <table class="w-full text-center border-collapse whitespace-nowrap">
                 <thead>
                     <tr class="bg-blue-600 text-white">
                         <th class="p-3 border-b">1st Q</th>
@@ -93,14 +94,14 @@
         </div>
     </div>
 
-    <div id="breakdown-screen" class="hidden-screen p-6 max-w-4xl mx-auto">
+    <div id="breakdown-screen" class="hidden-screen p-3 md:p-6 max-w-4xl mx-auto">
         <div class="bg-white rounded-lg shadow p-6">
             <div class="flex justify-between items-center mb-6">
                 <h2 id="breakdown-title" class="text-2xl font-bold text-gray-800">Quarter Breakdown</h2>
                 <button id="back-to-dashboard-btn" class="text-blue-600 hover:underline">&larr; Back to Dashboard</button>
             </div>
             
-            <table class="w-full text-center border-collapse border border-gray-200">
+            <table class="w-full text-center border-collapse border border-gray-200 whitespace-nowrap">
                 <thead>
                     <tr class="bg-gray-100 text-gray-700">
                         <th class="p-3 border">Quizzes (35%)</th>
