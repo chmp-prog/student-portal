@@ -55,8 +55,13 @@
             <table class="w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                     <tr class="bg-blue-600 text-white">
-                        <th class="p-3 border-b">Student No.</th>
-                        <th class="p-3 border-b">Name</th>
+                        <th class="p-3 border-b cursor-pointer hover:bg-blue-700 select-none transition" onclick="sortByStudentNo()">
+                            Student No. <span id="student-no-sort-icon" class="text-xs ml-1">&#8597;</span>
+                        </th>
+                        <!-- With this updated line -->
+                        <th class="p-3 border-b cursor-pointer hover:bg-blue-700 select-none transition" onclick="sortByName()">
+                            Name <span id="name-sort-icon" class="text-xs ml-1">&#8597;</span>
+                        </th>
                         <th class="p-3 border-b">1st Q</th>
                         <th class="p-3 border-b">2nd Q</th>
                         <th class="p-3 border-b">3rd Q</th>
@@ -657,6 +662,60 @@
                 console.error("API Error:", error);
                 throw error;
             }
+        }
+        // Variable to track the current sorting direction
+        let nameSortAsc = true; 
+
+        function sortByName() {
+        // Toggle the sorting direction
+        nameSortAsc = !nameSortAsc;
+        
+        // Update the sort icon (Up arrow for Ascending, Down arrow for Descending)
+        const sortIcon = document.getElementById('name-sort-icon');
+        sortIcon.innerHTML = nameSortAsc ? '&#9650;' : '&#9660;';
+
+        // Sort the main data array alphabetically
+        currentAdminData.sort((a, b) => {
+            const nameA = a.name.toLowerCase();
+            const nameB = b.name.toLowerCase();
+            
+            if (nameA < nameB) return nameSortAsc ? -1 : 1;
+            if (nameA > nameB) return nameSortAsc ? 1 : -1;
+            return 0;
+        });
+
+        // Re-apply any active search or section filters to update the table UI
+        const currentSearch = document.getElementById('admin-search').value.toLowerCase();
+        const currentSection = document.getElementById('section-filter').value;
+        filterAdminTable(currentSearch, currentSection);
+    }
+
+    // Variable to track the current sorting direction for Student Numbers
+    let studentNoSortAsc = true; 
+
+    function sortByStudentNo() {
+        // Toggle the sorting direction
+        studentNoSortAsc = !studentNoSortAsc;
+        
+        // Update the sort icon (Up arrow for Ascending, Down arrow for Descending)
+        const sortIcon = document.getElementById('student-no-sort-icon');
+        sortIcon.innerHTML = studentNoSortAsc ? '&#9650;' : '&#9660;';
+
+        // Sort the main data array by student number
+        currentAdminData.sort((a, b) => {
+            // We convert to strings in case the student numbers contain hyphens (e.g., 24-0001)
+            const numA = String(a.studentNumber).toLowerCase();
+            const numB = String(b.studentNumber).toLowerCase();
+            
+            if (numA < numB) return studentNoSortAsc ? -1 : 1;
+            if (numA > numB) return studentNoSortAsc ? 1 : -1;
+            return 0;
+        });
+
+        // Re-apply any active search or section filters to update the table UI
+        const currentSearch = document.getElementById('admin-search').value.toLowerCase();
+        const currentSection = document.getElementById('section-filter').value;
+        filterAdminTable(currentSearch, currentSection);
         }
     </script>
 </body>
